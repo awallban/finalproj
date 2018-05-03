@@ -25,7 +25,7 @@ typedef struct Range{
 	int max;
 } Range;
 
-void copyBoard(Board& original, Board& copied){
+void copy.bBoard(Board& original, Board& copied){
     for(int i =0; i<8;i++)
 	    for(int j=0; j < 8;j++)
 		    copied.b[i][j] = original[i][j];
@@ -35,27 +35,26 @@ void copyBoard(Board& original, Board& copied){
 //TODO:figure out what moves are possible and append them to a vector, return the vector
 vector<Board> getPossibleMoves(Board original, bool maximizer){
 	vector<Board> moves;
-	bool canCapture = true;
-	if(maximizer){
+	if(maximizer==true){
 		//search array for maximizer pieces, which move from top to bottom
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				// is this piece a maximizer?
 				if(board[i][j]=='X'){
-					Board copy[8][8];
+					Board copy.b;
 					for(int k = 0; k < 8; k++){
 						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
+							copy.b[k][l]=board.b[k][l];
 						}
 					}
 					//check - can this piece move forward at all?
 					if(i+1<8){
 						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i+2 < 8 && copy[i+1][j+1]=="O"){
-							if(j+2 < 8 && copy[i+1][j+2] == "_"){
-								copy[i+2][j+2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j+1]="_";
+						if(j+1 < 8 && i+2 < 8 && copy.b[i+1][j+1]=='O'){
+							if(j+2 < 8 && copy.b[i+1][j+2] == '_'){
+								copy.b[i+2][j+2]='X';
+								copy.b[i][j] = '_';
+								copy.b[i+1][j+1]='_';
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
@@ -64,40 +63,40 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								recursiveBoards = getPossibleMoves(copy,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i+2][j+2]="_";
-								copy[i][j]="X";
-								copy[i+1][j+1]="O";
+								copy.b[i+2][j+2]='_';
+								copy.b[i][j]='X';
+								copy.b[i+1][j+1]='O';
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i+2 < 8 && copy[i+1][j-1]=="O"){
-							if(j-2 > 0 && copy[i+1][j-2] == "_"){
-								copy[i+2][j-2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j-1]="_";
+						if(j-1 > 0 && i+2 < 8 && copy.b[i+1][j-1]=='O'){
+							if(j-2 > 0 && copy.b[i+1][j-2] == '_'){
+								copy.b[i+2][j-2]="X";
+								copy.b[i][j] = "_";
+								copy.b[i+1][j-1]="_";
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
 								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
+								recursiveBoards = getPossibleMoves(copy.b,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i+2][j-2]="_";
-								copy[i][j]="X";
-								copy[i+1][j-1]="O";
+								copy.b[i+2][j-2]="_";
+								copy.b[i][j]="X";
+								copy.b[i+1][j-1]="O";
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i+1 < 8 && copy[i+1][j+1]=="_"){
-							copy[i+1][j+1]="X";
-							copy[i][j]="X";
+						if(j+1 < 8 && i+1 < 8 && copy.b[i+1][j+1]=="_"){
+							copy.b[i+1][j+1]="X";
+							copy.b[i][j]="X";
 							moves.push_back(copy);
 						}
 						//check - can this piece move left?
 						if(j-1 > 0 && i+1 < 8 && board[i+1][j+1] ++ "_"){
-							copy[i+1][j-1]="X";
-							copy[i][j]="_";
+							copy.b[i+1][j-1]="X";
+							copy.b[i][j]="_";
 							moves.push_back(copy);
 						}
 					}
@@ -111,63 +110,63 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 			for(int j = 8; j > 0; j--){
 				// is this piece a minimizer?
 				if(board[i][j]=='O'){
-					Board copy[8][8];
+					Board copy.b[8][8];
 					for(int k = 0; k < 8; k++){
 						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
+							copy.b[k][l]=board.b[k][l];
 						}
 					}
 					//check - can this piece move forward at all?
 					if(i-1>0){
 						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i-2 < 0 && copy[i-1][j+1]=="X"){
-							if(j+2 < 8 && copy[i-1][j+2] == "_"){
-								copy[i-2][j+2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j+1]="_";
+						if(j+1 < 8 && i-2 < 0 && copy.b[i-1][j+1]=="X"){
+							if(j+2 < 8 && copy.b[i-1][j+2] == "_"){
+								copy.b[i-2][j+2]="O";
+								copy.b[i][j] = "_";
+								copy.b[i-1][j+1]="_";
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
 								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
+								recursiveBoards = getPossibleMoves(copy.b,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i-2][j+2]="_";
-								copy[i][j]="O";
-								copy[i-1][j+1]="X";
+								copy.b[i-2][j+2]="_";
+								copy.b[i][j]="O";
+								copy.b[i-1][j+1]="X";
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i-2 > 0 && copy[i+1][j-1]=="X"){
-							if(j-2 > 0 && copy[i-1][j-2] == "_"){
-								copy[i-2][j-2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j-1]="_";
+						if(j-1 > 0 && i-2 > 0 && copy.b[i+1][j-1]=="X"){
+							if(j-2 > 0 && copy.b[i-1][j-2] == "_"){
+								copy.b[i-2][j-2]="O";
+								copy.b[i][j] = "_";
+								copy.b[i-1][j-1]="_";
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
 								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
+								recursiveBoards = getPossibleMoves(copy.b,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i-2][j-2]="_";
-								copy[i][j]="O";
-								copy[i-1][j-1]="X";
+								copy.b[i-2][j-2]="_";
+								copy.b[i][j]="O";
+								copy.b[i-1][j-1]="X";
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i-1 > 0 && copy[i-1][j+1]=="_"){
-							copy[i-1][j+1]="O";
-							copy[i][j]="_";
-							moves.push_back(copy);
+						if(j+1 < 8 && i-1 > 0 && board.b[i-1][j+1]=="_"){
+							copy.b[i-1][j+1]="O";
+							copy.b[i][j]="_";
+							moves.push_back(copy.b);
 						}
 						//check - can this piece move left?
-						if(j-1 > 0 && i-1 > 0 && board[i-1][j+1] ++ "_"){
-							copy[i+1][j-1]="O";
-							copy[i][j]="_";
-							moves.push_back(copy);
+						if(j-1 > 0 && i-1 > 0 && board.b[i-1][j+1] == "_"){
+							copy.b[i+1][j-1]="O";
+							copy.b[i][j]="_";
+							moves.push_back(copy.b);
 						}
 
 					}
