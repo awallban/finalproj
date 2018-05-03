@@ -88,6 +88,18 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								copy[i+1][j-1]="O";
 							}
 						}
+						//check - can this piece move right?
+						if(j+1 < 8 && i+1 < 8 && copy[i+1][j+1]=="_"){
+							copy[i+1][j+1]="X";
+							copy[i][j]="X";
+							moves.push_back(copy);
+						}
+						//check - can this piece move left?
+						if(j-1 > 0 && i+1 < 8 && board[i+1][j+1] ++ "_"){
+							copy[i+1][j-1]="X";
+							copy[i][j]="_";
+							moves.push_back(copy);
+						}
 					}
 				}
 			}
@@ -145,6 +157,19 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								copy[i-1][j-1]="X";
 							}
 						}
+						//check - can this piece move right?
+						if(j+1 < 8 && i-1 > 0 && copy[i-1][j+1]=="_"){
+							copy[i-1][j+1]="O";
+							copy[i][j]="_";
+							moves.push_back(copy);
+						}
+						//check - can this piece move left?
+						if(j-1 > 0 && i-1 > 0 && board[i-1][j+1] ++ "_"){
+							copy[i+1][j-1]="O";
+							copy[i][j]="_";
+							moves.push_back(copy);
+						}
+
 					}
 				}
 			}
