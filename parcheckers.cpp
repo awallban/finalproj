@@ -214,7 +214,7 @@ Board minimax(Board original, bool maximizer){
 		original.score=score;
 		return original;
 	}
-	vector<Board> options=getPossibleMoves(original);
+	vector<Board> options=getPossibleMoves(original,maximizer);
 
 
 	//now, if it's a draw...
@@ -258,7 +258,7 @@ Board minimax(Board original, bool maximizer){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, Board original){
-	vector<Board> boards = getPossibleMoves(original);
+	vector<Board> boards = getPossibleMoves(original, maximizer);
 	if(childRange.min+boards.size() > childRange.max){
 		// send 0 to parent, tag 10
 		//GENERAL STRUCTURE OF MPI SEND FOR REF
@@ -283,8 +283,8 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 	int width = childRange.max - childRange.min-boards.size();
 	for(int i =0; i < boards.size();i++){
 		Range temp;
-		temp.min = (childRange.min+boards.size()) + width/boards.size*i;
-		temp.max = (childRange.min+boards.size()) + width/boards.size*(i+1) -1;//Off by one errors are the worst
+		temp.min = (childRange.min+boards.size()) + width/boards.size()*i;
+		temp.max = (childRange.min+boards.size()) + width/boards.size()*(i+1) -1;//Off by one errors are the worst
 		ranges.push_back(temp);
 	}
 	
@@ -315,12 +315,12 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 	Board best;
 	best.score=0;
 	if(maximizer){
-		for(auto i:board)
+		for(auto i:boards)
 			if(best.score<i.score)
 				copyBoard(i,best);
 	}
 	else{
-		for(auto i:board)
+		for(auto i:boards)
 			if(best.score>i.score)
 				copyBoard(i,best);
 	}
@@ -360,9 +360,10 @@ int main(int argc, char* argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 	int worldSize;
 	MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+	Board emptyBoard;//TODO: fill
 	if(worldRank == 0){
 		Board best;
-		vector<Board> boards = getPossibleMoves(emptyBoard);
+		vector<Board> boards = getPossibleMoves(emptyBoard, true);
 		if(worldSize > boards.size()){
 		//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
 		//	MPI_Abort(MPI_COMM_WORLD);
@@ -371,7 +372,7 @@ int main(int argc, char* argv[]){
 			
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
-			best = minimax(original, true);
+			best = minimax(emptyBoard, true);
 		}
 		else{
 
@@ -397,7 +398,7 @@ int main(int argc, char* argv[]){
 				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
 			}	
 			for(int i =0; i < boards.size();i++){
-				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE)
+				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				// Get boards back from cores; might as well refill boards, tag 11
 			}
 		
