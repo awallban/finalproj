@@ -406,7 +406,7 @@ int main(int argc, char* argv[]){
 			best.score =-10;
 			for(auto i:boards){
 				if(i.score>best.score){
-					boardCopy(i,best);
+					copyBoard(i,best);
 				}
 			}
 		}
