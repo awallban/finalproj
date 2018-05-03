@@ -42,134 +42,136 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 			for(int j = 0; j < 8; j++){
 				// is this piece a maximizer?
 				if(board[i][j]=='X'){
-					Board copy[8][8];
-					for(int k = 0; k < 8; k++){
-						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
-						}
-					}
 					//check - can this piece move forward at all?
-					if(i+1<8){
-						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i+2 < 8 && copy[i+1][j+1]=="O"){
-							if(j+2 < 8 && copy[i+1][j+2] == "_"){
-								copy[i+2][j+2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j+1]="_";
-								moves.push_back(copy);
-								// make recursive call to see if it can still capture stuff
-								// gather those recursive results into a vector
-								// append total moves vector with results from recursive calls
-								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
-								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
-								// replace stuff
-								copy[i+2][j+2]="_";
-								copy[i][j]="X";
-								copy[i+1][j+1]="O";
+					if(i+1 < 8){
+						Board copy[8][8];
+						for(int k = 0; k < 8; k++){
+							for(int l = 0; l < 8; l++){
+								copy[k][l]=original[k][l];
 							}
 						}
-						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i+2 < 8 && copy[i+1][j-1]=="O"){
-							if(j-2 > 0 && copy[i+1][j-2] == "_"){
-								copy[i+2][j-2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j-1]="_";
-								moves.push_back(copy);
-								// make recursive call to see if it can still capture stuff
-								// gather those recursive results into a vector
-								// append total moves vector with results from recursive calls
-								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
-								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
-								// replace stuff
-								copy[i+2][j-2]="_";
-								copy[i][j]="X";
-								copy[i+1][j-1]="O";
+						//keep checking moves after each capture
+						//that is, if a piece moves by capturing, record
+						//that move then check to see if it can capture again
+						while(canCapture==true){
+							//check - can this piece move forward and right?
+							if(j+1<8){
+								//check - can this piece capture anything to the right?
+								if(copy[i+1][j+1]=="O"){
+									if(i+2<8 && j+2<8 && copy[i+2][j+2]=="_"){
+										copy[i+2][j+2]="X";
+										copy[i][j]="_";
+										copy[i+1][j+1]="_";
+										moves.push_back(copy);
+										canCapture=true;
+									}
+								}
+								//check - can this piece just move forward and right?
+								else if(board[i+1][j+1]=="_"){
+									copy[i+1][j+1]="X";
+									copy[i][j]="_";
+									moves.push_back(copy);
+									canCapture=false;
+								}
 							}
-						}
-						//check - can this piece move right?
-						if(j+1 < 8 && i+1 < 8 && copy[i+1][j+1]=="_"){
-							copy[i+1][j+1]="X";
-							copy[i][j]="X";
-							moves.push_back(copy);
-						}
-						//check - can this piece move left?
-						if(j-1 > 0 && i+1 < 8 && board[i+1][j+1] ++ "_"){
-							copy[i+1][j-1]="X";
-							copy[i][j]="_";
-							moves.push_back(copy);
+							//check - can this piece move forward and left?
+							else if(j-1>0){
+								//check - can this piece capture anything to the left?
+								if(copy[i+1][j-1]=="O"){
+									if(i+2<8 && j-2<0 && copy[i+2][j-2]=="_"){
+										copy[i+2][j-2]="X";
+										copy[i][j]="_";
+										copy[i+1][j-1]="_";
+										move.push_back(copy);
+									}
+								}
+								//check - can this piece just move forward and left?
+								else if(board[i+1][j-1]=="_"){
+									for(int k = 0; k < 8; k++){
+										for(int l = 0; l < 8; l++){
+											Board copy[8][8];
+											copy[k][l]=original[k][l];
+										}
+									}
+									copy[i+1][j-1]="X";
+									copy[i][j]="_";
+									moves.push_back(copy);
+								}
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-	if(minimizer){
-		//search array for minimizer pieces, which move from bottom to top
+	else{
+	//search array for minimizer pieces, which move from bottom to top
 		for(int i = 8; i > 0; i--){
-			for(int j = 8; j > 0; j--){
+			for(int j = 8; j >0; j--){
 				// is this piece a minimizer?
 				if(board[i][j]=='O'){
-					Board copy[8][8];
-					for(int k = 0; k < 8; k++){
-						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
-						}
-					}
 					//check - can this piece move forward at all?
-					if(i-1>0){
-						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i-2 < 0 && copy[i-1][j+1]=="X"){
-							if(j+2 < 8 && copy[i-1][j+2] == "_"){
-								copy[i-2][j+2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j+1]="_";
+					if(i-1 > 0){
+						//check - can this piece move forward and right?
+						if(j+1<8){
+							//check - can this piece capture anything to the right?
+							if(board[i-1][j+1]=="X"){
+								if(i-2 > 0 && j+2<8 && board[i-2][j+2]=="_"){
+									for(int k = 0; k < 8; k++){
+										for(int l = 0; l < 8; l++){
+											Board copy[8][8];
+											copy[k][l]=original[k][l];
+										}
+									}
+									copy[i-2][j+2]="O";
+									copy[i][j]="_";
+									copy[i-1][j+1]="_";
+									moves.push_back(copy);
+								}
+							}
+							//check - can this piece just move forward and right?
+							else if(board[i-1][j+1]=="_"){
+								for(int k = 0; k < 8; k++){
+										for(int l = 0; l < 8; l++){
+											Board copy[8][8];
+											copy[k][l]=original[k][l];
+										}
+								}
+								copy[i-1][j+1]="O";
+								copy[i][j]="_";
 								moves.push_back(copy);
-								// make recursive call to see if it can still capture stuff
-								// gather those recursive results into a vector
-								// append total moves vector with results from recursive calls
-								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
-								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
-								// replace stuff
-								copy[i-2][j+2]="_";
-								copy[i][j]="O";
-								copy[i-1][j+1]="X";
 							}
 						}
-						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i-2 > 0 && copy[i+1][j-1]=="X"){
-							if(j-2 > 0 && copy[i-1][j-2] == "_"){
-								copy[i-2][j-2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j-1]="_";
+						//check - can this piece move forward and left?
+						else if(j-1>0){
+							//check - can this piece capture anything to the left?
+							if(board[i-1][j-1]=="X"){
+								if(i-2 > 0 && j-2<0 && board[i-2][j-2]=="_"){
+									for(int k = 0; k < 8; k++){
+										for(int l = 0; l < 8; l++){
+											Board copy[8][8];
+											copy[k][l]=original[k][l];
+										}
+									}
+									copy[i-2][j-2]="O";
+									copy[i][j]="_";
+									copy[i-1][j-1]="_";
+									move.push_back(copy);
+								}
+							}
+							//check - can this piece just move forward and left?
+							else if(board[i-1][j-1]=="_"){
+								for(int k = 0; k < 8; k++){
+										for(int l = 0; l < 8; l++){
+											Board copy[8][8];
+											copy[k][l]=original[k][l];
+										}
+								}
+								copy[i-1][j-1]="O";
+								copy[i][j]="_";
 								moves.push_back(copy);
-								// make recursive call to see if it can still capture stuff
-								// gather those recursive results into a vector
-								// append total moves vector with results from recursive calls
-								vector<Board> recursiveBoards;
-								recursiveBoards = getPossibleMoves(copy,maximizer);
-								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
-								// replace stuff
-								copy[i-2][j-2]="_";
-								copy[i][j]="O";
-								copy[i-1][j-1]="X";
 							}
 						}
-						//check - can this piece move right?
-						if(j+1 < 8 && i-1 > 0 && copy[i-1][j+1]=="_"){
-							copy[i-1][j+1]="O";
-							copy[i][j]="_";
-							moves.push_back(copy);
-						}
-						//check - can this piece move left?
-						if(j-1 > 0 && i-1 > 0 && board[i-1][j+1] ++ "_"){
-							copy[i+1][j-1]="O";
-							copy[i][j]="_";
-							moves.push_back(copy);
-						}
-
 					}
 				}
 			}
