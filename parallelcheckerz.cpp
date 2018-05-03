@@ -11,7 +11,7 @@ using namespace std;
 
 
 MPI_Datatype mpi_board_type;
-
+MPI_Datatype mpi_range_type;
 
 ////////////////////////////////////////////////////////////////////////////////
 //fun with functions
@@ -20,6 +20,10 @@ typedef struct Board_s{
 	char b[8][8];
 	int score;
 } Board;
+typedef struct Range{
+	int min;
+	int max;
+} Range;
 void copyBoard(Board& original, Board& copied){
     for(int i =0; i<8;i++)
 	    for(int j=0; j < 8;j++)
@@ -27,8 +31,8 @@ void copyBoard(Board& original, Board& copied){
     copied.score = orginal.score;
 }
 
-//TODO
-vector<Board> getPossibleMoves(Board original){
+//TODO:figure out what moves are possible and append them to a vector, return the vector
+vector<Board> getPossibleMoves(Board original, bool maximizer){
 	
 
 
@@ -110,10 +114,12 @@ Board minimax(Board original, bool maximizer){
 		}
 	}
 }
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void parallelSubMaster(bool maximizer, int id, int parentId, int* childRange, Board original){
+void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, Board original){
 	vector<Board> boards = getPossibleMoves(original);
-	if(childRange[0]+boards.size() > numCores){//TODO:numCores
+	if(childRange.min+boards.size() > childRange.max){
 		// send 0 to parent, tag 10
 		//GENERAL STRUCTURE OF MPI SEND FOR REF
 		/*
@@ -132,11 +138,24 @@ void parallelSubMaster(bool maximizer, int id, int parentId, int* childRange, Bo
 		return;
 	}
 	//int totalUsed = 0;
-	//TODO:Build sub ranges
+	
+	vector<Range> ranges;
+	int width = childRange.max - childRange.min-boards.size();
+	for(int i =0; i < boards.size();i++){
+		Range temp;
+		temp.min = (childRange.min+boards.size()) + width/boards.size*i;
+		temp.max = (childRange.min+boards.size()) + width/boards.size*(i+1) -1;//Off by one errors are the worst
+		ranges.push_back(temp);
+	}
+	
+
 	for(int i =0; i<boards.size();i++){
-		//TODO:Send !maximizer state
-		//TODO:Send childRange to children
-		MPI_Send(&boards[i], 1, mpi_board_type, childRange[0]+i, 01, MPI_COMM_WORLD);
+		//Send !maximizer state
+		bool temp = !maximizer;
+		MPI_Send(&temp, 1, MPI_BOOL, childRange.min+i, 03, MPI_COMM_WORLD);
+		//Send childRange to children
+		MPI_Send(&ranges[i], 1, mpi_range_type, childRange.min+i, 02, MPI_COMM_WORLD);
+		MPI_Send(&boards[i], 1, mpi_board_type, childRange.min+i, 01, MPI_COMM_WORLD);
 
 		/* Not needed; range now
 		int used = 0;
@@ -175,10 +194,10 @@ int main(int argc, char* argv[]){
 	
 	MPI_Init(&argc, &argv);
 
-
+	//YAY custom MPI data types...yay.....yeah
 	const int nitems=2;
 	int blocklengths[2] = {64,1};
-	MPI_Datatype types[2] = {MPI_CHAR,MPI_INT}
+	MPI_Datatype types[2] = {MPI_CHAR,MPI_INT};
 	MPI_Aint offsets[2];
 	offsets[0] = offsetof(Board, b);
 	offsets[1] = offsetof(Board, score);
@@ -186,13 +205,35 @@ int main(int argc, char* argv[]){
 	MPI_Type_create_struct(nitems,blocklengths,offsets,types,&mpi_board_type);
 	MPI_Type_commit(&mpi_board_type);
 	
-	if(isRoot){
+
+	const int bitems=2;
+	int blocklength[2] = {1,1};
+	MPI_Datatype tpes[2] = {MPI_INT, MPI_INT};
+	MPI_Aint offset[2];
+	offset[0] = offsetof(Range, min);
+	offset[1] = offsetof(Range, max);
+	MPI_Type_create_struct(bitems,blocklength,offset,tpes,&mpi_range_type);
+	MPI_Type_commit(&mpi_range_type);
+
+
+	int worldRank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+	int worldSize;
+	MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+	if(worldRank == 0){
 		vector<Board> boards = getPossibleMoves(emptyBoard);
 		for(int i =0; i < boards.size();i++){
 
 			// Send boards[i] to core i, tag 01
-			//TODO:Check if we have enough cores
-			//TODO:Also send the maximizer state, childRange
+			//Check if we have enough cores
+			if(worldSize > boards.size()){
+				cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
+				MPI_Abort(MPI_COMM_WORLD);
+				MPI_Finalize();
+				exit(1);
+			}
+			//TODO: build initial range
+			//TODO:Also send the maximizer state tag 03, childRange tag 02
 			MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
 		}
 		for(int i =0; i < boards.size();i++){
@@ -215,10 +256,13 @@ int main(int argc, char* argv[]){
 		Board original;
 		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
 		int parentId = status.MPI_SOURCE;
-		//TODO:get childRange, maximizer state
+		//get childRange tag 02, maximizer state, tag 03
 		// get board and childStartId, save parentId, save maximizer state, tag 01
-		parallelSubMaster();
-		//TODO:fill params ^
+		bool maximizer;
+		MPI_Recv(&maximizer, 1, MPI_BOOL, parentId, 03, MPI_COMM_WORLD);
+		Range childRange;
+		MPI_Recv(&childRange, 1, mpi_rane_type, parentId, 02, MPI_COMM_WORLD);
+		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
 	}
 	return 0;
 }
