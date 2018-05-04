@@ -90,14 +90,20 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 						//check - can this piece move right?
 						if(j+1 < 8 && i+1 < 8 && copy.b[i+1][j+1]=='_'){
 							copy.b[i+1][j+1]='X';
-							copy.b[i][j]='X';
+							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff
+							copy.b[i+1][j+1]='_';
+							copy.b[i][j]='X';
 						}
 						//check - can this piece move left?
-						if(j-1 > 0 && i+1 < 8 && board.b[i+1][j+1]=='_'){
+						if(j-1 >= 0 && i+1 < 8 && board.b[i+1][j-1]=='_'){
 							copy.b[i+1][j-1]='X';
 							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff
+							copy.b[i+1][j-1]='_';
+							copy.b[i][j]='X';
 						}
 					}
 				}
@@ -106,8 +112,8 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 	}
 	if(maximizer==false){
 		//search array for minimizer pieces, which move from bottom to top
-		for(int i = 8; i > 0; i--){
-			for(int j = 8; j > 0; j--){
+		for(int i = 7; i >= 0; i--){
+			for(int j = 7; j >= 0; j--){
 				// is this piece a minimizer?
 				if(board.b[i][j]=='O'){
 					Board copy;
@@ -117,10 +123,10 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 						}
 					}
 					//check - can this piece move forward at all?
-					if(i-1>0){
+					if(i-1>=0){
 						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i-2 < 0 && copy.b[i-1][j+1]=='X'){
-							if(j+2 < 8 && copy.b[i-1][j+2] == '_'){
+						if(j+1 <= 8 && i-2 >= 0 && copy.b[i-1][j+1]=='X'){
+							if(j+2 <= 8 && copy.b[i-1][j+2] == '_'){
 								copy.b[i-2][j+2]='O';
 								copy.b[i][j] = '_';
 								copy.b[i-1][j+1]='_';
@@ -138,7 +144,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i-2 > 0 && copy.b[i+1][j-1]=='X'){
+						if(j-1 >= 0 && i-2 >= 0 && copy.b[i+1][j-1]=='X'){
 							if(j-2 > 0 && copy.b[i-1][j-2] == '_'){
 								copy.b[i-2][j-2]='O';
 								copy.b[i][j] = '_';
@@ -157,16 +163,22 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i-1 > 0 && copy.b[i-1][j+1]=='_'){
-							copy.b[i-1][j+1]='O';
-							copy.b[i][j]='_';
-							moves.push_back(copy);
-						}
+						//if(j+1 < 8 && i-1 >= 0 && copy.b[i-1][j+1]=='_'){
+						//	copy.b[i-1][j+1]='O';
+						//	copy.b[i][j]='_';
+						//	moves.push_back(copy);
+						//	//replace stuff
+						//	copy.b[i-1][j+1]='_';
+						//	copy.b[i][j]='O';
+						//}
 						//check - can this piece move left?
-						if(j-1 > 0 && i-1 > 0 && board.b[i-1][j+1] == '_'){
-							copy.b[i+1][j-1]='O';
+						if(j-1 >= 0 && i-1 >= 0 && board.b[i-1][j-1] == '_'){
+							copy.b[i-1][j-1]='O';
 							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff 
+							copy.b[i-1][j-1]='_';
+							copy.b[i][j]='O';
 						}
 
 					}
@@ -177,16 +189,16 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 
 return moves;	
 }
-
+//prints the gameboard
 void printBoard(Board board){
-	cout << "========" << endl;
+	cout << "================" << endl;
 	for(int i = 0; i < 8; i++){
 		for(int j = 0; j < 8; j++){
 			cout << board.b[i][j] << '|';
 		}
 		cout << endl;
 	}
-	cout << "========" << endl;
+	cout << "================" << endl;
 }
 
 //determines if the game is over and who won
@@ -444,6 +456,14 @@ int main(int argc, char* argv[]){
 
 	printBoard(emptyBoard);
 
+	cout << "ATTEMPTING TO FIND ALL POSSIBLE MOVES..." << endl;
+	vector<Board> moves = getPossibleMoves(emptyBoard,false);
+	cout << "DONE. SIZE OF THIS VECTOR: " << moves.size();
+	
+	for (int i = 0; i < moves.size();i++){
+		printBoard(moves[i]);
+	}
+
 	if(worldRank == 0){
 		Board best;
 		vector<Board> boards = getPossibleMoves(emptyBoard, true);
@@ -457,57 +477,57 @@ int main(int argc, char* argv[]){
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
 			best = minimax(emptyBoard, true);
 		}
-		else{
-
-
-		
-			for(int i =0; i < boards.size();i++){
-
-				// Send boards[i] to core i, tag 01
-				//Check if we have enough cores
-				if(worldSize > boards.size()){
-				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
-				//	MPI_Abort(MPI_COMM_WORLD);
-				//	MPI_Finalize();
-				//	exit(1);
-			
-
-					cout << "Not enough cores supplied, Will run sequentially" <<endl;
-				
-			
-				}	
-				//TODO: build initial range
-				//TODO:Also send the maximizer state tag 03, childRange tag 02
-				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
-			}	
-			for(int i =0; i < boards.size();i++){
-				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				// Get boards back from cores; might as well refill boards, tag 11
-			}
-		
-
-			best.score =-10;
-			for(auto i:boards){
-				if(i.score>best.score){
-					copyBoard(i,best);
-				}
-			}
-		}
-		//TODO:print best board option
-
-	}
-	else{
-		MPI_Status status;
-		Board original;
-		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
-		int parentId = status.MPI_SOURCE;
-		//get childRange tag 02, maximizer state, tag 03
-		// get board and childStartId, save parentId, save maximizer state, tag 01
-		bool maximizer;
-		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		Range childRange;
-		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
+//		else{
+//
+//
+//		
+//			for(int i =0; i < boards.size();i++){
+//
+//				// Send boards[i] to core i, tag 01
+//				//Check if we have enough cores
+//				if(worldSize > boards.size()){
+//				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
+//				//	MPI_Abort(MPI_COMM_WORLD);
+//				//	MPI_Finalize();
+//				//	exit(1);
+//			
+//
+//					cout << "Not enough cores supplied, Will run sequentially" <<endl;
+//				
+//			
+//				}	
+//				//TODO: build initial range
+//				//TODO:Also send the maximizer state tag 03, childRange tag 02
+//				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
+//			}	
+//			for(int i =0; i < boards.size();i++){
+//				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//				// Get boards back from cores; might as well refill boards, tag 11
+//			}
+//		
+//
+//			best.score =-10;
+//			for(auto i:boards){
+//				if(i.score>best.score){
+//					copyBoard(i,best);
+//				}
+//			}
+//		}
+//		//TODO:print best board option
+//
+//	}
+//	else{
+//		MPI_Status status;
+//		Board original;
+//		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
+//		int parentId = status.MPI_SOURCE;
+//		//get childRange tag 02, maximizer state, tag 03
+//		// get board and childStartId, save parentId, save maximizer state, tag 01
+//		bool maximizer;
+//		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//		Range childRange;
+//		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
 	}
 	MPI_Finalize();
 	return 0;
