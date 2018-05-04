@@ -178,6 +178,17 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 return moves;	
 }
 
+void printBoard(Board board){
+	cout << "========" << endl;
+	for(int i = 0; i < 8; i++){
+		for(int j = 0; j < 8; j++){
+			cout << board.b[i][j] << '|';
+		}
+		cout << endl;
+	}
+	cout << "========" << endl;
+}
+
 //determines if the game is over and who won
 int scoreBoard(Board board){
 	bool X=false;
@@ -359,7 +370,80 @@ int main(int argc, char* argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 	int worldSize;
 	MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-	Board emptyBoard;//TODO: fill
+
+	Board emptyBoard;
+
+	//fill board
+	//top section
+	emptyBoard.b[0][1]='X';
+	emptyBoard.b[0][3]='X';
+	emptyBoard.b[0][5]='X';
+	emptyBoard.b[0][7]='X';
+	emptyBoard.b[0][0]='_';
+	emptyBoard.b[0][2]='_';
+	emptyBoard.b[0][4]='_';
+	emptyBoard.b[0][6]='_';
+	emptyBoard.b[1][0]='X';
+	emptyBoard.b[1][2]='X';
+	emptyBoard.b[1][4]='X';
+	emptyBoard.b[1][6]='X';
+	emptyBoard.b[1][1]='_';
+	emptyBoard.b[1][3]='_';
+	emptyBoard.b[1][5]='_';
+	emptyBoard.b[1][7]='_';
+	emptyBoard.b[2][1]='X';
+	emptyBoard.b[2][3]='X';
+	emptyBoard.b[2][5]='X';
+	emptyBoard.b[2][7]='X';
+	emptyBoard.b[2][0]='_';
+	emptyBoard.b[2][2]='_';
+	emptyBoard.b[2][4]='_';
+	emptyBoard.b[2][6]='_';
+	//bottom section
+	emptyBoard.b[5][0]='O';
+	emptyBoard.b[5][2]='O';
+	emptyBoard.b[5][4]='O';
+	emptyBoard.b[5][6]='O';
+	emptyBoard.b[5][1]='_';
+	emptyBoard.b[5][3]='_';
+	emptyBoard.b[5][5]='_';
+	emptyBoard.b[5][7]='_';
+	emptyBoard.b[6][1]='O';
+	emptyBoard.b[6][3]='O';
+	emptyBoard.b[6][5]='O';
+	emptyBoard.b[6][7]='O';
+	emptyBoard.b[6][0]='_';
+	emptyBoard.b[6][2]='_';
+	emptyBoard.b[6][4]='_';
+	emptyBoard.b[6][6]='_';
+	emptyBoard.b[7][0]='O';
+	emptyBoard.b[7][2]='O';
+	emptyBoard.b[7][4]='O';
+	emptyBoard.b[7][6]='O';
+	emptyBoard.b[7][1]='_';
+	emptyBoard.b[7][3]='_';
+	emptyBoard.b[7][5]='_';
+	emptyBoard.b[7][7]='_';
+	//middle section
+	emptyBoard.b[3][0]='_';
+	emptyBoard.b[3][1]='_';
+	emptyBoard.b[3][2]='_';
+	emptyBoard.b[3][3]='_';
+	emptyBoard.b[3][4]='_';
+	emptyBoard.b[3][5]='_';
+	emptyBoard.b[3][6]='_';
+	emptyBoard.b[3][7]='_';
+	emptyBoard.b[4][0]='_';
+	emptyBoard.b[4][1]='_';
+	emptyBoard.b[4][2]='_';
+	emptyBoard.b[4][3]='_';
+	emptyBoard.b[4][4]='_';
+	emptyBoard.b[4][5]='_';
+	emptyBoard.b[4][6]='_';
+	emptyBoard.b[4][7]='_';
+
+	printBoard(emptyBoard);
+
 	if(worldRank == 0){
 		Board best;
 		vector<Board> boards = getPossibleMoves(emptyBoard, true);
