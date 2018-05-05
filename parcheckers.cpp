@@ -28,34 +28,33 @@ typedef struct Range{
 void copyBoard(Board& original, Board& copied){
     for(int i =0; i<8;i++)
 	    for(int j=0; j < 8;j++)
-		    copied.b[i][j] = original[i][j];
-    copied.score = orginal.score;
+		    copied.b[i][j] = original.b[i][j];
+    copied.score = original.score;
 }
 
-//TODO:figure out what moves are possible and append them to a vector, return the vector
-vector<Board> getPossibleMoves(Board original, bool maximizer){
+//figure out what moves are possible and append them to a vector, return the vector
+vector<Board> getPossibleMoves(Board board, bool maximizer){
 	vector<Board> moves;
-	bool canCapture = true;
-	if(maximizer){
+	if(maximizer==true){
 		//search array for maximizer pieces, which move from top to bottom
 		for(int i = 0; i < 8; i++){
 			for(int j = 0; j < 8; j++){
 				// is this piece a maximizer?
-				if(board[i][j]=='X'){
-					Board copy[8][8];
+				if(board.b[i][j]=='X'){
+					Board copy;
 					for(int k = 0; k < 8; k++){
 						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
+							copy.b[k][l]=board.b[k][l];
 						}
 					}
 					//check - can this piece move forward at all?
 					if(i+1<8){
 						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i+2 < 8 && copy[i+1][j+1]=="O"){
-							if(j+2 < 8 && copy[i+1][j+2] == "_"){
-								copy[i+2][j+2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j+1]="_";
+						if(j+1 < 8 && i+2 < 8 && copy.b[i+1][j+1]=='O'){
+							if(j+2 < 8 && copy.b[i+1][j+2] == '_'){
+								copy.b[i+2][j+2]='X';
+								copy.b[i][j] = '_';
+								copy.b[i+1][j+1]='_';
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
@@ -64,17 +63,17 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								recursiveBoards = getPossibleMoves(copy,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i+2][j+2]="_";
-								copy[i][j]="X";
-								copy[i+1][j+1]="O";
+								copy.b[i+2][j+2]='_';
+								copy.b[i][j]='X';
+								copy.b[i+1][j+1]='O';
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i+2 < 8 && copy[i+1][j-1]=="O"){
-							if(j-2 > 0 && copy[i+1][j-2] == "_"){
-								copy[i+2][j-2]="X";
-								copy[i][j] = "_";
-								copy[i+1][j-1]="_";
+						if(j-1 > 0 && i+2 < 8 && copy.b[i+1][j-1]=='O'){
+							if(j-2 > 0 && copy.b[i+1][j-2] == '_'){
+								copy.b[i+2][j-2]='X';
+								copy.b[i][j] = '_';
+								copy.b[i+1][j-1]='_';
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
@@ -83,48 +82,54 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								recursiveBoards = getPossibleMoves(copy,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i+2][j-2]="_";
-								copy[i][j]="X";
-								copy[i+1][j-1]="O";
+								copy.b[i+2][j-2]='_';
+								copy.b[i][j]='X';
+								copy.b[i+1][j-1]='O';
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i+1 < 8 && copy[i+1][j+1]=="_"){
-							copy[i+1][j+1]="X";
-							copy[i][j]="X";
+						if(j+1 < 8 && i+1 < 8 && copy.b[i+1][j+1]=='_'){
+							copy.b[i+1][j+1]='X';
+							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff
+							copy.b[i+1][j+1]='_';
+							copy.b[i][j]='X';
 						}
 						//check - can this piece move left?
-						if(j-1 > 0 && i+1 < 8 && board[i+1][j+1] ++ "_"){
-							copy[i+1][j-1]="X";
-							copy[i][j]="_";
+						if(j-1 >= 0 && i+1 < 8 && board.b[i+1][j-1]=='_'){
+							copy.b[i+1][j-1]='X';
+							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff
+							copy.b[i+1][j-1]='_';
+							copy.b[i][j]='X';
 						}
 					}
 				}
 			}
 		}
 	}
-	if(minimizer){
+	if(maximizer==false){
 		//search array for minimizer pieces, which move from bottom to top
-		for(int i = 8; i > 0; i--){
-			for(int j = 8; j > 0; j--){
+		for(int i = 7; i >= 0; i--){
+			for(int j = 7; j >= 0; j--){
 				// is this piece a minimizer?
-				if(board[i][j]=='O'){
-					Board copy[8][8];
+				if(board.b[i][j]=='O'){
+					Board copy;
 					for(int k = 0; k < 8; k++){
 						for (int l = 0; l < 8; l++){
-							copy[k][l]=board[k][l];
+							copy.b[k][l]=board.b[k][l];
 						}
 					}
 					//check - can this piece move forward at all?
-					if(i-1>0){
+					if(i-1>=0){
 						//check - can this piece capture anything to the right?
-						if(j+1 < 8 && i-2 < 0 && copy[i-1][j+1]=="X"){
-							if(j+2 < 8 && copy[i-1][j+2] == "_"){
-								copy[i-2][j+2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j+1]="_";
+						if(j+1 <= 8 && i-2 >= 0 && copy.b[i-1][j+1]=='X'){
+							if(j+2 <= 8 && copy.b[i-1][j+2] == '_'){
+								copy.b[i-2][j+2]='O';
+								copy.b[i][j] = '_';
+								copy.b[i-1][j+1]='_';
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
@@ -133,17 +138,17 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								recursiveBoards = getPossibleMoves(copy,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i-2][j+2]="_";
-								copy[i][j]="O";
-								copy[i-1][j+1]="X";
+								copy.b[i-2][j+2]='_';
+								copy.b[i][j]='O';
+								copy.b[i-1][j+1]='X';
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 > 0 && i-2 > 0 && copy[i+1][j-1]=="X"){
-							if(j-2 > 0 && copy[i-1][j-2] == "_"){
-								copy[i-2][j-2]="O";
-								copy[i][j] = "_";
-								copy[i-1][j-1]="_";
+						if(j-1 >= 0 && i-2 >= 0 && copy.b[i+1][j-1]=='X'){
+							if(j-2 >= 0 && copy.b[i-1][j-2] == '_'){
+								copy.b[i-2][j-2]='O';
+								copy.b[i][j] = '_';
+								copy.b[i-1][j-1]='_';
 								moves.push_back(copy);
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
@@ -152,22 +157,28 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 								recursiveBoards = getPossibleMoves(copy,maximizer);
 								moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
-								copy[i-2][j-2]="_";
-								copy[i][j]="O";
-								copy[i-1][j-1]="X";
+								copy.b[i-2][j-2]='_';
+								copy.b[i][j]='O';
+								copy.b[i-1][j-1]='X';
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i-1 > 0 && copy[i-1][j+1]=="_"){
-							copy[i-1][j+1]="O";
-							copy[i][j]="_";
+						if(j+1 <= 8 && i-1 >= 0 && copy.b[i-1][j+1]=='_'){
+							copy.b[i-1][j+1]='O';
+							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff
+							copy.b[i-1][j+1]='_';
+							copy.b[i][j]='O';
 						}
 						//check - can this piece move left?
-						if(j-1 > 0 && i-1 > 0 && board[i-1][j+1] ++ "_"){
-							copy[i+1][j-1]="O";
-							copy[i][j]="_";
+						if(j-1 >= 0 && i-1 >= 0 && board.b[i-1][j-1] == '_'){
+							copy.b[i-1][j-1]='O';
+							copy.b[i][j]='_';
 							moves.push_back(copy);
+							//replace stuff 
+							copy.b[i-1][j-1]='_';
+							copy.b[i][j]='O';
 						}
 
 					}
@@ -177,6 +188,17 @@ vector<Board> getPossibleMoves(Board original, bool maximizer){
 	}
 
 return moves;	
+}
+//prints the gameboard
+void printBoard(Board board){
+	cout << "================" << endl;
+	for(int i = 0; i < 8; i++){
+		for(int j = 0; j < 8; j++){
+			cout << board.b[i][j] << '|';
+		}
+		cout << endl;
+	}
+	cout << "================" << endl;
 }
 
 //determines if the game is over and who won
@@ -208,12 +230,20 @@ int scoreBoard(Board board){
 	return 999999; //there are no pieces. something is wrong; we should never get here
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-Board minimax(Board original, bool maximizer){
+Board minimax(Board original, bool maximizer,int depth){
+	//check to see if anyone's won the game yet
 	int score = scoreBoard(original);
 	if(score!=0){
 		original.score=score;
 		return original;
 	}
+	
+	//now, if we've capped out our depth, spit back out the best move that's been found thus far
+	if(depth==1){
+		return best;
+	}
+
+	//if not, see if any moves can be made
 	vector<Board> options=getPossibleMoves(original,maximizer);
 
 
@@ -223,9 +253,9 @@ Board minimax(Board original, bool maximizer){
 	}
 	//if the game is still going:
 	//IF YOU ARE THE MAXIMIZER
-	if(maximizer){
+	if(maximizer == true && depth <= 1){
 		for(int i = 0; i < options.size(); i++){
-			options[i]=minimax(options[i], !maximizer); //flipping the bool
+			options[i]=minimax(options[i], !maximizer,depth+1); //flipping the bool
 			
 		}
 		Board best;						//the highest scoring route
@@ -239,9 +269,9 @@ Board minimax(Board original, bool maximizer){
 		return best;
 	}
 	//IF YOU ARE THE MINIMIZER
-	else{
+	else if(maximizer == false && depth <= 1){
 		for(int i =0; i< options.size(); i++){
-			options[i]=minimax(options[i], !maximizer);
+			options[i]=minimax(options[i], !maximizer,depth+1);
 		}
 		Board best;
 		best.score = 10;
@@ -292,7 +322,7 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 	for(int i =0; i<boards.size();i++){
 		//Send !maximizer state
 		bool temp = !maximizer;
-		MPI_Send(&temp, 1, MPI_BOOL, childRange.min+i, 03, MPI_COMM_WORLD);
+		MPI_Send(&temp, 1, MPI_INT, childRange.min+i, 03, MPI_COMM_WORLD);
 		//Send childRange to children
 		MPI_Send(&ranges[i], 1, mpi_range_type, childRange.min+i, 02, MPI_COMM_WORLD);
 		MPI_Send(&boards[i], 1, mpi_board_type, childRange.min+i, 01, MPI_COMM_WORLD);
@@ -360,11 +390,164 @@ int main(int argc, char* argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 	int worldSize;
 	MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-	Board emptyBoard;//TODO: fill
+
+	Board emptyBoard;
+
+	//fill board
+	//top section
+	//emptyBoard.b[0][1]='X';
+	//emptyBoard.b[0][3]='X';
+	//emptyBoard.b[0][5]='X';
+	//emptyBoard.b[0][7]='X';
+	//emptyBoard.b[0][0]='_';
+	//emptyBoard.b[0][2]='_';
+	//emptyBoard.b[0][4]='_';
+	//emptyBoard.b[0][6]='_';
+	//emptyBoard.b[1][0]='X';
+	//emptyBoard.b[1][2]='X';
+	//emptyBoard.b[1][4]='X';
+	//emptyBoard.b[1][6]='X';
+	//emptyBoard.b[1][1]='_';
+	//emptyBoard.b[1][3]='_';
+	//emptyBoard.b[1][5]='_';
+	//emptyBoard.b[1][7]='_';
+	//emptyBoard.b[2][1]='X';
+	//emptyBoard.b[2][3]='X';
+	//emptyBoard.b[2][5]='X';
+	//emptyBoard.b[2][7]='X';
+	//emptyBoard.b[2][0]='_';
+	//emptyBoard.b[2][2]='_';
+	//emptyBoard.b[2][4]='_';
+	//emptyBoard.b[2][6]='_';
+	//bottom section
+	//emptyBoard.b[5][0]='O';
+	//emptyBoard.b[5][2]='O';
+	//emptyBoard.b[5][4]='O';
+	//emptyBoard.b[5][6]='O';
+	//emptyBoard.b[5][1]='_';
+	//emptyBoard.b[5][3]='_';
+	//emptyBoard.b[5][5]='_';
+	//emptyBoard.b[5][7]='_';
+	//emptyBoard.b[6][1]='O';
+	//emptyBoard.b[6][3]='O';
+	//emptyBoard.b[6][5]='O';
+	//emptyBoard.b[6][7]='O';
+	//emptyBoard.b[6][0]='_';
+	//emptyBoard.b[6][2]='_';
+	//emptyBoard.b[6][4]='_';
+	//emptyBoard.b[6][6]='_';
+	//emptyBoard.b[7][0]='O';
+	//emptyBoard.b[7][2]='O';
+	//emptyBoard.b[7][4]='O';
+	//emptyBoard.b[7][6]='O';
+	//emptyBoard.b[7][1]='_';
+	//emptyBoard.b[7][3]='_';
+	//emptyBoard.b[7][5]='_';
+	//emptyBoard.b[7][7]='_';
+	//middle section
+	//emptyBoard.b[3][0]='_';
+	//emptyBoard.b[3][1]='_';
+	//emptyBoard.b[3][2]='_';
+	//emptyBoard.b[3][3]='_';
+	//emptyBoard.b[3][4]='_';
+	//emptyBoard.b[3][5]='_';
+	//emptyBoard.b[3][6]='_';
+	//emptyBoard.b[3][7]='_';
+	//emptyBoard.b[4][0]='_';
+	//emptyBoard.b[4][1]='_';
+	//emptyBoard.b[4][2]='_';
+	//emptyBoard.b[4][3]='_';
+	//emptyBoard.b[4][4]='_';
+	//emptyBoard.b[4][5]='_';
+	//emptyBoard.b[4][6]='_';
+	//emptyBoard.b[4][7]='_';
+
+	//printBoard(emptyBoard);
+
+	//fill board
+	//top section
+	emptyBoard.b[0][1]='_';
+	emptyBoard.b[0][3]='_';
+	emptyBoard.b[0][5]='_';
+	emptyBoard.b[0][7]='_';
+	emptyBoard.b[0][0]='_';
+	emptyBoard.b[0][2]='_';
+	emptyBoard.b[0][4]='_';
+	emptyBoard.b[0][6]='_';
+	emptyBoard.b[1][0]='_';
+	emptyBoard.b[1][2]='_';
+	emptyBoard.b[1][4]='_';
+	emptyBoard.b[1][6]='_';
+	emptyBoard.b[1][1]='_';
+	emptyBoard.b[1][3]='_';
+	emptyBoard.b[1][5]='_';
+	emptyBoard.b[1][7]='_';
+	emptyBoard.b[2][1]='_';
+	emptyBoard.b[2][3]='_';
+	emptyBoard.b[2][5]='_';
+	emptyBoard.b[2][7]='_';
+	emptyBoard.b[2][0]='_';
+	emptyBoard.b[2][2]='_';
+	emptyBoard.b[2][4]='_';
+	emptyBoard.b[2][6]='_';
+	//bottom section
+	emptyBoard.b[5][0]='_';
+	emptyBoard.b[5][2]='_';
+	emptyBoard.b[5][4]='_';
+	emptyBoard.b[5][6]='_';
+	emptyBoard.b[5][1]='_';
+	emptyBoard.b[5][3]='_';
+	emptyBoard.b[5][5]='_';
+	emptyBoard.b[5][7]='_';
+	emptyBoard.b[6][1]='_';
+	emptyBoard.b[6][3]='_';
+	emptyBoard.b[6][5]='_';
+	emptyBoard.b[6][7]='_';
+	emptyBoard.b[6][0]='_';
+	emptyBoard.b[6][2]='_';
+	emptyBoard.b[6][4]='_';
+	emptyBoard.b[6][6]='_';
+	emptyBoard.b[7][0]='_';
+	emptyBoard.b[7][2]='_';
+	emptyBoard.b[7][4]='_';
+	emptyBoard.b[7][6]='_';
+	emptyBoard.b[7][1]='_';
+	emptyBoard.b[7][3]='_';
+	emptyBoard.b[7][5]='_';
+	emptyBoard.b[7][7]='_';
+	//middle section
+	emptyBoard.b[3][0]='_';
+	emptyBoard.b[3][1]='_';
+	emptyBoard.b[3][2]='_';
+	emptyBoard.b[3][3]='_';
+	emptyBoard.b[3][4]='_';
+	emptyBoard.b[3][5]='_';
+	emptyBoard.b[3][6]='_';
+	emptyBoard.b[3][7]='_';
+	emptyBoard.b[4][0]='_';
+	emptyBoard.b[4][1]='_';
+	emptyBoard.b[4][2]='_';
+	emptyBoard.b[4][3]='_';
+	emptyBoard.b[4][4]='_';
+	emptyBoard.b[4][5]='_';
+	emptyBoard.b[4][6]='_';
+	emptyBoard.b[4][7]='_';
+
+
+
+	//vector<Board> moves = getPossibleMoves(emptyBoard,false);
+	//for (int i = 0; i < moves.size();i++){
+	//	printBoard(moves[i]);
+	//}
+	
+	cout << "CORE " << worldRank << " IS HOT." << endl;
+
 	if(worldRank == 0){
 		Board best;
+		cout << "Getting possible moves..." << endl;
 		vector<Board> boards = getPossibleMoves(emptyBoard, true);
-		if(worldSize > boards.size()){
+		cout << "done." << endl;
+		if(worldSize < boards.size()){ // this was > before - fixed a mistake?
 		//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
 		//	MPI_Abort(MPI_COMM_WORLD);
 		//	MPI_Finalize();
@@ -373,58 +556,62 @@ int main(int argc, char* argv[]){
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
 			best = minimax(emptyBoard, true);
+			cout << "best possible move is: " << endl;
+			printBoard(best);
 		}
-		else{
-
-
-		
-			for(int i =0; i < boards.size();i++){
-
-				// Send boards[i] to core i, tag 01
-				//Check if we have enough cores
-				if(worldSize > boards.size()){
-				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
-				//	MPI_Abort(MPI_COMM_WORLD);
-				//	MPI_Finalize();
-				//	exit(1);
-			
-
-					cout << "Not enough cores supplied, Will run sequentially" <<endl;
-				
-			
-				}	
-				//TODO: build initial range
-				//TODO:Also send the maximizer state tag 03, childRange tag 02
-				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
-			}	
-			for(int i =0; i < boards.size();i++){
-				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				// Get boards back from cores; might as well refill boards, tag 11
-			}
-		
-
-			best.score =-10;
-			for(auto i:boards){
-				if(i.score>best.score){
-					copyBoard(i,best);
-				}
-			}
-		}
-		//TODO:print best board option
-
+//		else{
+//
+//
+//		
+//			for(int i =0; i < boards.size();i++){
+//
+//				// Send boards[i] to core i, tag 01
+//				//Check if we have enough cores
+//				if(worldSize > boards.size()){
+//				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
+//				//	MPI_Abort(MPI_COMM_WORLD);
+//				//	MPI_Finalize();
+//				//	exit(1);
+//			
+//
+//					cout << "Not enough cores supplied, Will run sequentially" <<endl;
+//				
+//			
+//				}	
+//				//TODO: build initial range
+//				//TODO:Also send the maximizer state tag 03, childRange tag 02
+//				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
+//			}	
+//			for(int i =0; i < boards.size();i++){
+//				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//				// Get boards back from cores; might as well refill boards, tag 11
+//			}
+//		
+//
+//			best.score =-10;
+//			for(auto i:boards){
+//				if(i.score>best.score){
+//					copyBoard(i,best);
+//				}
+//			}
+//		}
+//		//TODO:print best board option
+//
+//	}
+//	else{
+//		MPI_Status status;
+//		Board original;
+//		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
+//		int parentId = status.MPI_SOURCE;
+//		//get childRange tag 02, maximizer state, tag 03
+//		// get board and childStartId, save parentId, save maximizer state, tag 01
+//		bool maximizer;
+//		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//		Range childRange;
+//		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
 	}
-	else{
-		MPI_Status status;
-		Board original;
-		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
-		int parentId = status.MPI_SOURCE;
-		//get childRange tag 02, maximizer state, tag 03
-		// get board and childStartId, save parentId, save maximizer state, tag 01
-		bool maximizer;
-		MPI_Recv(&maximizer, 1, MPI_BOOL, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		Range childRange;
-		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
-	}
+	cout << "made it past if statement."<<endl;
+	MPI_Finalize();
 	return 0;
 }
