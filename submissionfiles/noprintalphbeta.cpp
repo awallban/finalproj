@@ -1,8 +1,6 @@
-//SEQUENTIAL TIC TAC TOE-- PRINTS THE BOARD (DON'T USE FOR TIMING)
+//ALPHA BETA IMPLEMENTATION OF TIC TAC TOE--DOES NOT PRINT THE BOARD 
 //JOE HUNT AND ALISON WALLBANK
-//MATH 440 FINAL PROJECT
-
-
+//MATH440 FINAL PROJECT
 
 #include<bits/stdc++.h>
 #include<iostream>
@@ -16,8 +14,8 @@ struct Move
 {
 	int row,col;
 };
-clock_t t;
-char player = 'x',opponent = 'o';
+
+char player = 'x', opponent = 'o';
 
 // FUNCTION DEFINITIONS
 // =====================================================
@@ -51,7 +49,7 @@ int winningBoard(char b[3][3]){
 	}
 	//check for column victories
 	for(int col = 0; col < 3; col++){
-		if(b[0][col] == b[1][col] && b[1][col] == b[2][col]){
+		if(b[0][col] == b[1][col] && b[1][col]==b[2][col]){
 			if(b[0][col] == player){
 				return +10;
 			}
@@ -82,7 +80,7 @@ int winningBoard(char b[3][3]){
 }
 // minimax function
 // ====================================================
-int minimax(char board[3][3], int depth, bool isMax){
+int minimax(char board[3][3], int depth, bool isMax, int alpha, int beta){
 	//check the current board
 	int score = winningBoard(board);
 	//if the maximizing player has won, return their score
@@ -102,38 +100,49 @@ int minimax(char board[3][3], int depth, bool isMax){
 	//if maximizer's turn, use minimax to find best move
 	if (isMax){
 		// if you're maximizer, find the top score you can get by minimaxing all possible board positions recursively
-		int topScore = -1000;
+		int v = alpha;
+		//iterate through the board
+		
+		for(int i = 0; i < 3; i++){
+			for (int j = 0 ;j < 3; j++){
+				//make your move
+				if(board[i][j] == '_'){
+					//board[i][j]=player;
+					//call minimax, alphabeta (recursion), choose best possible move
+					if(v < beta){
+						board[i][j] = player;
+						v = max(v,minimax(board,depth+1,!isMax,alpha,beta));
+						board[i][j] = '_';
+						//beta = v;
+					}
+					board[i][j] = '_';
+					
+				}
+			}
+		}
+		return v;
+	}
+	//if minimizer's turn, use minimax to find best move
+	else {
+		// if you're the minimizer, find the least score you can by minimaxing all possible board positions recursively
+		int v = beta;
 		//iterate through the board
 		for(int i = 0; i < 3; i++){
 			for (int j = 0; j < 3; j++){
 				//make your move
 				if(board[i][j] == '_'){
-					board[i][j] = player;
-					//call minimax (recursion), choose best possible move
-					topScore = max(topScore, minimax(board, depth+1, !isMax));
+					board[i][j] = opponent;
+					if(v > alpha){
+						//call minimax (recursion), choose best possible move
+						board[i][j] = opponent;
+						v = min(v,minimax(board, depth+1, !isMax, alpha, beta));
+						board[i][j] = '_';
+					}
 					board[i][j] = '_';
 				}
 			}
 		}
-		return topScore;
-	}
-	//if minimizer's turn, use minimax to find best move
-	else {
-		// if you're the minimizer, find the least score you can by minimaxing all possible board positions recursively
-		int topScore = 1000;
-		//iterate through the board
-		for(int i = 0; i < 3; i++){
-			for (int j = 0;j < 3; j++){
-				//make your move
-				if(board[i][j] == '_'){
-					board[i][j]=opponent;
-					//call minimax (recursion), choose best possible move
-					topScore = min(topScore,minimax(board,depth+1,!isMax));
-					board[i][j] = '_';
-				}
-			}
-		}
-		return topScore;
+		return v;
 	}
 }
 
@@ -142,10 +151,9 @@ int minimax(char board[3][3], int depth, bool isMax){
 Move findBestMove(char board[3][3], bool isPlayer){
 	int bestMaxVal = -100;
 	int bestMinVal = 100;
-	//int bestVal = -100;
 	Move bestMove;
-	bestMove.row=-1;
-	bestMove.col=-1;
+	bestMove.row = -1;
+	bestMove.col = -1;
 	//look through board, run minimax on all cells, return best possible move.
 	for(int i = 0; i < 3; i++){
 		for (int j = 0; j < 3; j++){
@@ -154,7 +162,7 @@ Move findBestMove(char board[3][3], bool isPlayer){
 				board[i][j] = player;
 				//was this a good move? check by seeing what the minimizing player's reaction
 				//would be for player's attempted move
-				int moveVal = minimax(board, 0, false);
+				int moveVal = minimax(board, 0 , false, bestMaxVal, bestMinVal);
 
 				board[i][j] = '_';
 
@@ -171,7 +179,7 @@ Move findBestMove(char board[3][3], bool isPlayer){
 				board[i][j] = opponent;
 				//was this a good move? check by seeing what the minimizing player's reaction
 				//would be for player's attempted move
-				int moveVal = minimax(board,0,true);
+				int moveVal = minimax(board, 0, true, bestMaxVal, bestMinVal);
 
 				board[i][j] = '_';
 
@@ -179,18 +187,17 @@ Move findBestMove(char board[3][3], bool isPlayer){
 				if(moveVal < bestMinVal){
 					bestMove.row = i;
 					bestMove.col = j;
-					bestMinVal = moveVal;
+					bestMinVal=moveVal;
 				}
 			}
 		}
 	}
-	//SANITY CHECKS
 	// print out end result(win, lose, draw) for current player
 	if(isPlayer == true){
-	//	cout << "Best move value is:" << bestMaxVal << "for PLAYER" << endl;
+//		cout << "Best move value is:" << bestMaxVal << "for PLAYER" << endl;
 	}
 	else {
-	//	cout << "Best move value is:" << bestMinVal << "for OPPONENT" << endl;
+//		cout << "Best move value is:" << bestMinVal << "for OPPONENT" << endl;
 	}
 	return bestMove;
 }
@@ -207,31 +214,32 @@ int main(){
 	bool currPlayer = true;
 	int gameState = 0;
 	bool isBoardGood = true;
+	clock_t t;
 	// print initial board:
-	//cout << "Initial board: " << endl;
+//	cout << "Initial board: " << endl;
 	for(int j = 0; j < 3; j++){
 			for(int k = 0; k < 3; k++){
-	//			cout << board[j][k] << '|';
+//				cout << board[j][k] << '|';
 			}
-	//		cout << endl;
+//			cout << endl;
 		}
 	t = clock();
 	// begin playing the game
 	while((gameState == 0) && (isBoardGood == true)){
 		Move bestMove = findBestMove(board, currPlayer);
 
-	//	cout << "The best move on the board to make is: " << "ROW: " << bestMove.row << " COL: " << bestMove.col << endl;
+//		cout << "The best move on the board to make is: " << "ROW: " << bestMove.row << " COL: " << bestMove.col << endl;
 		if(currPlayer == true){
-			board[bestMove.row][bestMove.col] = player;
+			board[bestMove.row][bestMove.col]=player;
 		}
 		else {
-			board[bestMove.row][bestMove.col] = opponent;
+			board[bestMove.row][bestMove.col]=opponent;
 		}
 		for(int j = 0; j < 3; j++){
 			for(int k = 0; k < 3; k++){
-	//			cout << board[j][k] << '|';
+//				cout << board[j][k] << '|';
 			}
-	//		cout << endl;
+//			cout << endl;
 		}
 		// check if game over
 		gameState = winningBoard(board);
@@ -240,8 +248,7 @@ int main(){
 		// switch players
 		currPlayer = !currPlayer;
 	}
-	t = clock() - t;
-	//Print the runtime
-	cout << "elapsed processing time :" << ((float)t)/CLOCKS_PER_SEC << " seconds." << endl;
+	t = clock()-t;
+	cout << "Elapsed processing time: " << ((float)t)/CLOCKS_PER_SEC << " seconds." << endl;
 	return 0;
 }
