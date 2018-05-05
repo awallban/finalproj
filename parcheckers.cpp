@@ -19,10 +19,10 @@ MPI_Datatype mpi_range_type;
 typedef struct Board_s{
 	char b[8][8] = {
 		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','X','_','_','_'},
-		{'_','_','_','_','_','_','_','_'},
+		{'_','_','X','_','_','_','_','_'},
+		{'_','O','_','_','_','_','_','_'},
+		{'O','_','_','_','X','_','_','_'},
+		{'_','_','_','O','_','O','_','_'},
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','O','_','_'},
 		{'_','_','_','_','_','_','_','_'}
@@ -41,7 +41,106 @@ void copyBoard(Board& original, Board& copied){
 		    copied.b[i][j] = original.b[i][j];
     copied.score = original.score;
 }
-//TODO: WRITE MULTIPLE JUMPS FUNCTION
+
+
+
+//checks for multiple jumps for a given piece of the board
+vector<Board> multipleJumps(Board board, int row, int col, bool maximizer){
+	vector<Board>results;
+	if(maximizer==true){
+		//check - can this piece move forward at all?
+			if(row+1<8){
+				//check - can this piece capture anything to the right?
+				if(col+1 <= 8 && row+2 <= 8 && board.b[row+1][col+1]=='O'){
+					if(col+2 < 8 && board.b[row+1][col+2] == '_'){
+						board.b[row+2][col+2]='X';
+						board.b[row][col] = '_';
+						board.b[row+1][col+1]='_';
+						results.push_back(board);
+						// make recursive call to see if it can still capture stuff
+						// gather those recursive results into a vector
+						// append total moves vector with results from recursive calls
+						vector<Board> recursiveBoards;
+						recursiveBoards = multipleJumps(board,row+2,col+2,maximizer);
+						//cout << "SIZE OF RECURSIVE BOARDS: " << recursiveBoards.size() << endl;
+						results.insert(results.end(),recursiveBoards.begin(),recursiveBoards.end());
+						// replace stuff
+						board.b[row+2][col+2]='_';
+						board.b[row][col]='X';
+						board.b[row+1][col+1]='O';
+					}
+				}
+				//check - can this piece capture anything to the left?
+				if(col-1 >= 0 && row+2 <= 8 && board.b[row+1][col-1]=='O'){
+					if(col-2 >= 0 && board.b[row+1][col-2] == '_'){
+						board.b[row+2][col-2]='X';
+						board.b[row][col] = '_';
+						board.b[row+1][col-1]='_';
+						results.push_back(board);
+						// make recursive call to see if it can still capture stuff
+						// gather those recursive results into a vector
+						// append total moves vector with results from recursive calls
+						vector<Board> recursiveBoards;
+						recursiveBoards = multipleJumps(board,row+2,col-2,maximizer);
+						//cout << "SIZE OF RECURSIVE BOARDS: " << recursiveBoards.size() << endl;
+						results.insert(results.end(),recursiveBoards.begin(),recursiveBoards.end());
+						// replace stuff
+						board.b[row+2][col-2]='_';
+						board.b[row][col]='X';
+						board.b[row+1][col-1]='O';
+					}
+				}
+			}
+
+	}
+	else if(maximizer==false){
+			//check - can this piece move forward at all?
+			if(row-1>=0){
+				//check - can this piece capture anything to the right?
+				if(col+1 <= 8 && row-2 >= 0 && board.b[row-1][col+1]=='X'){
+					if(col+2 < 8 && board.b[row-2][col+2] == '_'){
+						board.b[row-2][col+2]='O';
+						board.b[row][col] = '_';
+						board.b[row-1][col+1]='_';
+						results.push_back(board);
+						// make recursive call to see if it can still capture stuff
+						// gather those recursive results into a vector
+						// append total moves vector with results from recursive calls
+						vector<Board> recursiveBoards;
+						recursiveBoards = multipleJumps(board,row-2,col+2,maximizer);
+						results.insert(results.end(),recursiveBoards.begin(),recursiveBoards.end());
+						// replace stuff
+						board.b[row-2][col+2]='_';
+						board.b[row][col]='O';
+						board.b[row-1][col+1]='X';
+					}
+				}
+				//check - can this piece capture anything to the left?
+				if(col-1 >= 0 && row-2 >= 0 && board.b[row-1][col-1]=='X'){
+					if(col-2 >= 0 && board.b[row-2][col-2] == '_'){
+						board.b[row-2][col-2]='O';
+						board.b[row][col] = '_';
+						board.b[row-1][col-1]='_';
+						results.push_back(board);
+						// make recursive call to see if it can still capture stuff
+						// gather those recursive results into a vector
+						// append total moves vector with results from recursive calls
+						vector<Board> recursiveBoards;
+						recursiveBoards = multipleJumps(board,row-2,col-2,maximizer);
+						results.insert(results.end(),recursiveBoards.begin(),recursiveBoards.end());
+						// replace stuff
+						board.b[row-2][col-2]='_';
+						board.b[row][col]='O';
+						board.b[row-1][col-1]='X';
+					}
+				}
+			}	
+	}
+
+	return results;
+}
+
+
 //figure out what moves are possible and append them to a vector, return the vector
 vector<Board> getPossibleMoves(Board board, bool maximizer){
 	vector<Board> moves;
@@ -61,18 +160,18 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 					if(i+1<8){
 						//check - can this piece capture anything to the right?
 						if(j+1 <= 8 && i+2 <= 8 && copy.b[i+1][j+1]=='O'){
-							if(j+2 < 8 && copy.b[i+1][j+2] == '_'){
-								//justJumped = true;
+							if(j+2 < 8 && copy.b[i+2][j+2] == '_'){
 								copy.b[i+2][j+2]='X';
 								copy.b[i][j] = '_';
 								copy.b[i+1][j+1]='_';
 								moves.push_back(copy);
+								vector<Board>multJumps;
+								multJumps = multipleJumps(copy,i+2,j+2,maximizer);
+								//cout << "SIZE OF MULT JUMPS: " << multJumps.size() << endl;
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
-								//vector<Board> recursiveBoards;
-								//recursiveBoards = getPossibleMoves(copy,maximizer,1,1);
-								//moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
+								moves.insert(moves.end(),multJumps.begin(),multJumps.end());
 								// replace stuff
 								copy.b[i+2][j+2]='_';
 								copy.b[i][j]='X';
@@ -81,19 +180,18 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 						}
 						//check - can this piece capture anything to the left?
 						if(j-1 >= 0 && i+2 <= 8 && copy.b[i+1][j-1]=='O'){
-							if(j-2 > 0 && copy.b[i+1][j-2] == '_'){
-								//justJumped = true;
+							if(j-2 >= 0 && copy.b[i+2][j-2] == '_'){
 								copy.b[i+2][j-2]='X';
 								copy.b[i][j] = '_';
 								copy.b[i+1][j-1]='_';
 								moves.push_back(copy);
+								vector<Board>multJumps;
+								multJumps = multipleJumps(copy,i+2,j-2,maximizer);
+								//cout << "SIZE OF MULT JUMPS: " << multJumps.size() << endl;
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
-								// append total moves vector with results from recursive calls
-								//vector<Board> recursiveBoards;
-								//recursiveBoards = getPossibleMoves(copy,maximizer,1,1);
-								//moves.pop_back();
-								//moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
+								// append total moves vector with results from recursive call
+								moves.insert(moves.end(),multJumps.begin(),multJumps.end());
 								// replace stuff
 								copy.b[i+2][j-2]='_';
 								copy.b[i][j]='X';
@@ -139,8 +237,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 					if(i-1>=0){
 						//check - can this piece capture anything to the right?
 						if(j+1 <= 8 && i-2 >= 0 && copy.b[i-1][j+1]=='X'){
-							if(j+2 <= 8 && copy.b[i-1][j+2] == '_'){
-								//justJumped = true;
+							if(j+2 <= 8 && copy.b[i-2][j+2] == '_'){
 								copy.b[i-2][j+2]='O';
 								copy.b[i][j] = '_';
 								copy.b[i-1][j+1]='_';
@@ -148,10 +245,6 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
-								//vector<Board> recursiveBoards;
-								//recursiveBoards = getPossibleMoves(copy,maximizer,1,1);
-								//moves.pop_back();
-								//moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
 								copy.b[i-2][j+2]='_';
 								copy.b[i][j]='O';
@@ -160,8 +253,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 						}
 						//check - can this piece capture anything to the left?
 						if(j-1 >= 0 && i-2 >= 0 && copy.b[i+1][j-1]=='X'){
-							if(j-2 >= 0 && copy.b[i-1][j-2] == '_'){
-								//justJumped = true;
+							if(j-2 >= 0 && copy.b[i-2][j-2] == '_'){
 								copy.b[i-2][j-2]='O';
 								copy.b[i][j] = '_';
 								copy.b[i-1][j-1]='_';
@@ -169,10 +261,6 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 								// make recursive call to see if it can still capture stuff
 								// gather those recursive results into a vector
 								// append total moves vector with results from recursive calls
-								//vector<Board> recursiveBoards;
-								//moves.pop_back();
-								//recursiveBoards = getPossibleMoves(copy,maximizer,1,1);
-								//moves.insert(moves.end(),recursiveBoards.begin(),recursiveBoards.end());
 								// replace stuff
 								copy.b[i-2][j-2]='_';
 								copy.b[i][j]='O';
@@ -255,25 +343,20 @@ Board minimax(Board original, bool maximizer){
 		return original;
 	}
 	
-	//now, if we've capped out our depth, spit back out the best move that's been found thus far
-	//if(depth==1){
-	//	return best;
-	//}
-
 	//if not, see if any moves can be made
 	vector<Board> options=getPossibleMoves(original,maximizer);
 
 	//will print incremental steps
-	cout <<"From"<<endl;
-	printBoard(original);
-	cout <<"options"<<endl;
-	for(auto i: options)
-		printBoard(i);
+	//cout <<"From"<<endl;
+	//printBoard(original);
+	//cout <<"options"<<endl;
+	//for(auto i: options)
+	//printBoard(i);
 	
 
 	//now, if it's a draw...
 	if(options.size()==0){
-		cout <<"draw"<<endl;
+		//cout <<"draw"<<endl;
 		return original;
 	}
 	//if the game is still going:
@@ -304,7 +387,7 @@ Board minimax(Board original, bool maximizer){
 			if(i.score<best.score){
 				copyBoard(i,best);
 			}
-			return best;
+		return best;
 	
 		}
 	}
@@ -420,42 +503,39 @@ int main(int argc, char* argv[]){
 
 	printBoard(emptyBoard);
 
-	//vector<Board> moves = getPossibleMoves(emptyBoard,false);
-	//for (int i = 0; i < moves.size();i++){
-	//	printBoard(moves[i]);
-	//}
+//	vector<Board> moves = getPossibleMoves(emptyBoard,true);
+//	for (int i = 0; i < moves.size();i++){
+//		printBoard(moves[i]);
+//	}
 	
-	cout << "CORE " << worldRank << " IS HOT." << endl;
-	cout << "WORLDSIZE: " << worldSize << endl;
+//	cout << "CORE " << worldRank << " IS HOT." << endl;
+//	cout << "WORLDSIZE: " << worldSize << endl;
 
 	if(worldRank == 0){
 		Board best;
 		cout << "Getting possible moves..." << endl;
-		vector<Board> boards = getPossibleMoves(emptyBoard, true);
+		vector<Board> boards = getPossibleMoves(emptyBoard, false);
 		cout << "done. We have: "<< boards.size() << " moves." << endl;
-		cout << "trying to get into if statement..." << endl;
+		//cout << "trying to get into if statement..." << endl;
 
 		cout << "MOVES: " << endl;
 		for(int i = 0; i < boards.size(); i++){
 			printBoard(boards[i]);
 		}
 
-/*		if(worldSize <= boards.size()+1){ // this was > before - fixed a mistake?
+		if(worldSize <= boards.size()+1){ // this was > before - fixed a mistake?
 		// TODO: set back to: (worldsize < boards.size())
 		//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
 		//	MPI_Abort(MPI_COMM_WORLD);
 		//	MPI_Finalize();
 		//	exit(1);
 			
-			cout << "MOVES: " << endl;
-			for (int i =0; i < boards.size();i++){
-				printBoard(boards[i]);
-			}
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
-			best = minimax(emptyBoard, true);
-			cout << "best possible move is: " << endl;
-			printBoard(best);
-		}*/
+			//best = minimax(emptyBoard, true);
+			//cout << "best possible move is: " << endl;
+			//printBoard(best);
+		}
+	}
 //		else{
 //
 //
@@ -494,7 +574,6 @@ int main(int argc, char* argv[]){
 //		}
 //		//TODO:print best board option
 //
-//	}
 //	else{
 //		MPI_Status status;
 //		Board original;
@@ -507,8 +586,7 @@ int main(int argc, char* argv[]){
 //		Range childRange;
 //		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 //		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
-	}
-	cout << "made it past if statement."<<endl;
+	//cout << "made it past if statement."<<endl;
 	MPI_Finalize();
 	return 0;
 }
