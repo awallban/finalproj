@@ -6,6 +6,7 @@
 #include<vector>
 #include<stddef.h>
 #include<stdlib.h>
+#include<time.h>
 
 using namespace std;
 
@@ -18,14 +19,14 @@ MPI_Datatype mpi_range_type;
 //
 typedef struct Board_s{
 	char b[8][8] = {
-		{'_','_','_','_','_','_','_','_'},
-		{'_','_','X','_','_','_','_','_'},
-		{'_','O','_','O','_','_','_','_'},
-		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','O','_','_','_','_'},
+		{'_','X','_','X','_','X','_','X'},
+		{'X','_','X','_','X','_','X','_'},
+		{'_','X','_','X','_','X','_','X'},
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','_','_','_','_'}
+		{'O','_','O','_','O','_','O','_'},
+		{'_','O','_','O','_','O','_','O'},
+		{'O','_','O','_','O','_','O','_'}
 	};
 
 	int score = 0;
@@ -347,11 +348,11 @@ Board minimax(Board original, bool maximizer){
 	vector<Board> options=getPossibleMoves(original,maximizer);
 
 	//will print incremental steps
-	cout <<"From"<<endl;
-	printBoard(original);
-	cout <<"options"<<endl;
-	for(auto i: options)
-	printBoard(i);
+	//cout <<"From"<<endl;
+	//printBoard(original);
+	//cout <<"options"<<endl;
+	//for(auto i: options)
+	//printBoard(i);
 	
 
 	//now, if it's a draw...
@@ -499,6 +500,8 @@ int main(int argc, char* argv[]){
 	int worldSize;
 	MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
 
+	clock_t start = clock();
+
 	Board emptyBoard;
 
 	printBoard(emptyBoard);
@@ -514,7 +517,7 @@ int main(int argc, char* argv[]){
 	if(worldRank == 0){
 		Board best;
 		//cout << "Getting possible moves..." << endl;
-		vector<Board> boards = getPossibleMoves(emptyBoard, false);
+		vector<Board> boards = getPossibleMoves(emptyBoard, true);
 		//cout << "done. We have: "<< boards.size() << " moves." << endl;
 		//cout << "trying to get into if statement..." << endl;
 
@@ -523,8 +526,8 @@ int main(int argc, char* argv[]){
 		//	printBoard(boards[i]);
 		//}
 
-		if(worldSize <= boards.size()+1){ // this was > before - fixed a mistake?
-		// TODO: set back to: (worldsize < boards.size())
+		if(worldSize < boards.size()){ // this was > before - fixed a mistake?
+		//set back to: (worldsize < boards.size()) || worldSize <= boards.size()+1
 		//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
 		//	MPI_Abort(MPI_COMM_WORLD);
 		//	MPI_Finalize();
@@ -532,8 +535,10 @@ int main(int argc, char* argv[]){
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
 			best = minimax(emptyBoard, true);
+			clock_t end = (clock()-start)/CLOCKS_PER_SEC;
 			cout << "best endgame is: " << endl;
 			printBoard(best);
+			cout << "Time to find this board: " << end << " seconds." << endl;
 		}
 	}
 //		else{
@@ -572,7 +577,8 @@ int main(int argc, char* argv[]){
 //				}
 //			}
 //		}
-//		//TODO:print best board option
+//		//print best board option
+//		printBoard(best);
 //
 //	else{
 //		MPI_Status status;
