@@ -20,15 +20,15 @@ typedef struct Board_s{
 	char b[8][8] = {
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','X','_','_','_','_','_'},
-		{'_','O','_','_','_','_','_','_'},
-		{'O','_','_','_','X','_','_','_'},
-		{'_','_','_','O','_','O','_','_'},
+		{'_','O','_','O','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','_','O','_','_'},
+		{'_','_','_','O','_','_','_','_'},
+		{'_','_','_','_','_','_','_','_'},
+		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'}
 	};
 
-	int score;
+	int score = 0;
 } Board;
 typedef struct Range{
 	int min;
@@ -51,8 +51,8 @@ vector<Board> multipleJumps(Board board, int row, int col, bool maximizer){
 		//check - can this piece move forward at all?
 			if(row+1<8){
 				//check - can this piece capture anything to the right?
-				if(col+1 <= 8 && row+2 <= 8 && board.b[row+1][col+1]=='O'){
-					if(col+2 < 8 && board.b[row+1][col+2] == '_'){
+				if(col+1 <= 8 && row+2 < 8 && board.b[row+1][col+1]=='O'){
+					if(col+2 < 8 && board.b[row+2][col+2] == '_'){
 						board.b[row+2][col+2]='X';
 						board.b[row][col] = '_';
 						board.b[row+1][col+1]='_';
@@ -71,8 +71,8 @@ vector<Board> multipleJumps(Board board, int row, int col, bool maximizer){
 					}
 				}
 				//check - can this piece capture anything to the left?
-				if(col-1 >= 0 && row+2 <= 8 && board.b[row+1][col-1]=='O'){
-					if(col-2 >= 0 && board.b[row+1][col-2] == '_'){
+				if(col-1 >= 0 && row+2 < 8 && board.b[row+1][col-1]=='O'){
+					if(col-2 >= 0 && board.b[row+2][col-2] == '_'){
 						board.b[row+2][col-2]='X';
 						board.b[row][col] = '_';
 						board.b[row+1][col-1]='_';
@@ -97,7 +97,7 @@ vector<Board> multipleJumps(Board board, int row, int col, bool maximizer){
 			//check - can this piece move forward at all?
 			if(row-1>=0){
 				//check - can this piece capture anything to the right?
-				if(col+1 <= 8 && row-2 >= 0 && board.b[row-1][col+1]=='X'){
+				if(col+1 < 8 && row-2 >= 0 && board.b[row-1][col+1]=='X'){
 					if(col+2 < 8 && board.b[row-2][col+2] == '_'){
 						board.b[row-2][col+2]='O';
 						board.b[row][col] = '_';
@@ -159,8 +159,8 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 					//check - can this piece move forward at all?
 					if(i+1<8){
 						//check - can this piece capture anything to the right?
-						if(j+1 <= 8 && i+2 <= 8 && copy.b[i+1][j+1]=='O'){
-							if(j+2 < 8 && copy.b[i+2][j+2] == '_'){
+						if(j+1 <= 7 && i+2 <= 7 && copy.b[i+1][j+1]=='O'){
+							if(j+2 <= 7 && copy.b[i+2][j+2] == '_'){
 								copy.b[i+2][j+2]='X';
 								copy.b[i][j] = '_';
 								copy.b[i+1][j+1]='_';
@@ -179,7 +179,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 >= 0 && i+2 <= 8 && copy.b[i+1][j-1]=='O'){
+						if(j-1 >= 0 && i+2 <= 7 && copy.b[i+1][j-1]=='O'){
 							if(j-2 >= 0 && copy.b[i+2][j-2] == '_'){
 								copy.b[i+2][j-2]='X';
 								copy.b[i][j] = '_';
@@ -199,7 +199,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 < 8 && i+1 < 8 && copy.b[i+1][j+1]=='_'){
+						if(j+1 <=7 && i+1 <= 7 && copy.b[i+1][j+1]=='_'){
 							copy.b[i+1][j+1]='X';
 							copy.b[i][j]='_';
 							moves.push_back(copy);
@@ -208,7 +208,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							copy.b[i][j]='X';
 						}
 						//check - can this piece move left?
-						if(j-1 >= 0 && i+1 < 8 && board.b[i+1][j-1]=='_'){
+						if(j-1 >= 0 && i+1 <= 7 && board.b[i+1][j-1]=='_'){
 							copy.b[i+1][j-1]='X';
 							copy.b[i][j]='_';
 							moves.push_back(copy);
@@ -236,7 +236,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 					//check - can this piece move forward at all?
 					if(i-1>=0){
 						//check - can this piece capture anything to the right?
-						if(j+1 <= 8 && i-2 >= 0 && copy.b[i-1][j+1]=='X'){
+						if(j+1 <= 7 && i-2 >= 0 && copy.b[i-1][j+1]=='X'){
 							if(j+2 <= 8 && copy.b[i-2][j+2] == '_'){
 								copy.b[i-2][j+2]='O';
 								copy.b[i][j] = '_';
@@ -252,7 +252,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece capture anything to the left?
-						if(j-1 >= 0 && i-2 >= 0 && copy.b[i+1][j-1]=='X'){
+						if(j-1 >= 0 && i-2 >= 0 && copy.b[i-1][j-1]=='X'){
 							if(j-2 >= 0 && copy.b[i-2][j-2] == '_'){
 								copy.b[i-2][j-2]='O';
 								copy.b[i][j] = '_';
@@ -268,7 +268,7 @@ vector<Board> getPossibleMoves(Board board, bool maximizer){
 							}
 						}
 						//check - can this piece move right?
-						if(j+1 <= 8 && i-1 >= 0 && copy.b[i-1][j+1] == '_'){
+						if(j+1 <= 7 && i-1 >= 0 && copy.b[i-1][j+1] == '_'){
 							copy.b[i-1][j+1]='O';
 							copy.b[i][j]='_';
 							moves.push_back(copy);
@@ -296,7 +296,7 @@ return moves;
 }
 //prints the gameboard
 void printBoard(Board board){
-	cout << "================" << endl;
+	cout << board.score<<"\n================" << endl;
 	for(int i = 0; i < 8; i++){
 		for(int j = 0; j < 8; j++){
 			cout << board.b[i][j] << '|';
@@ -347,11 +347,11 @@ Board minimax(Board original, bool maximizer){
 	vector<Board> options=getPossibleMoves(original,maximizer);
 
 	//will print incremental steps
-	//cout <<"From"<<endl;
-	//printBoard(original);
-	//cout <<"options"<<endl;
-	//for(auto i: options)
-	//printBoard(i);
+	cout <<"From"<<endl;
+	printBoard(original);
+	cout <<"options"<<endl;
+	for(auto i: options)
+	printBoard(i);
 	
 
 	//now, if it's a draw...
@@ -513,15 +513,15 @@ int main(int argc, char* argv[]){
 
 	if(worldRank == 0){
 		Board best;
-		cout << "Getting possible moves..." << endl;
+		//cout << "Getting possible moves..." << endl;
 		vector<Board> boards = getPossibleMoves(emptyBoard, false);
-		cout << "done. We have: "<< boards.size() << " moves." << endl;
+		//cout << "done. We have: "<< boards.size() << " moves." << endl;
 		//cout << "trying to get into if statement..." << endl;
 
-		cout << "MOVES: " << endl;
-		for(int i = 0; i < boards.size(); i++){
-			printBoard(boards[i]);
-		}
+		//cout << "MOVES: " << endl;
+		//for(int i = 0; i < boards.size(); i++){
+		//	printBoard(boards[i]);
+		//}
 
 		if(worldSize <= boards.size()+1){ // this was > before - fixed a mistake?
 		// TODO: set back to: (worldsize < boards.size())
@@ -531,9 +531,9 @@ int main(int argc, char* argv[]){
 		//	exit(1);
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
-			//best = minimax(emptyBoard, true);
-			//cout << "best possible move is: " << endl;
-			//printBoard(best);
+			best = minimax(emptyBoard, true);
+			cout << "best endgame is: " << endl;
+			printBoard(best);
 		}
 	}
 //		else{
