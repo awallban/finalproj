@@ -504,7 +504,7 @@ int main(int argc, char* argv[]){
 
 	Board emptyBoard;
 
-	printBoard(emptyBoard);
+//	printBoard(emptyBoard);
 
 //	vector<Board> moves = getPossibleMoves(emptyBoard,true);
 //	for (int i = 0; i < moves.size();i++){
@@ -531,19 +531,7 @@ int main(int argc, char* argv[]){
 
 		
 		for(int i =0; i < boards.size();i++){
-				// Send boards[i] to core i, tag 01
-				//Check if we have enough cores
-			if(worldSize > boards.size()){
-				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
-				//	MPI_Abort(MPI_COMM_WORLD);
-				//	MPI_Finalize();
-				//	exit(1);
 			
-
-				cout << "Not enough cores supplied, Will run sequentially" <<endl;
-				
-			
-			}
 			int chunkSize = (worldSize-boards.size()-2)/boards.size();
 			Range r;
 			r.min = boards.size()+1 + i*chunkSize;
