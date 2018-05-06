@@ -516,22 +516,9 @@ int main(int argc, char* argv[]){
 
 	if(worldRank == 0){
 		Board best;
-		//cout << "Getting possible moves..." << endl;
 		vector<Board> boards = getPossibleMoves(emptyBoard, true);
-		//cout << "done. We have: "<< boards.size() << " moves." << endl;
-		//cout << "trying to get into if statement..." << endl;
 
-		//cout << "MOVES: " << endl;
-		//for(int i = 0; i < boards.size(); i++){
-		//	printBoard(boards[i]);
-		//}
-
-		if(worldSize < boards.size()){ // this was > before - fixed a mistake?
-		//set back to: (worldsize < boards.size()) || worldSize <= boards.size()+1
-		//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
-		//	MPI_Abort(MPI_COMM_WORLD);
-		//	MPI_Finalize();
-		//	exit(1);
+		if(worldSize < boards.size()){ 
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
 			best = minimax(emptyBoard, true);
@@ -539,60 +526,63 @@ int main(int argc, char* argv[]){
 			cout << "best endgame is: " << endl;
 			printBoard(best);
 			cout << "Time to find this board: " << end << " seconds." << endl;
+			return 0;
 		}
+
+		
+		for(int i =0; i < boards.size();i++){
+				// Send boards[i] to core i, tag 01
+				//Check if we have enough cores
+			if(worldSize > boards.size()){
+				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
+				//	MPI_Abort(MPI_COMM_WORLD);
+				//	MPI_Finalize();
+				//	exit(1);
+			
+
+				cout << "Not enough cores supplied, Will run sequentially" <<endl;
+				
+			
+			}
+			int chunkSize = (worldSize-boards.size()-2)/boards.size();
+			Range r;
+			r.min = boards.size()+1 + i*chunkSize;
+			r.max = boards.size()+1 + (i+1)*chunkSize;
+			bool maximizer = false;
+			MPI_Send(&maximizer, 1, MPI_INT, i+1, 03, MPI_COMM_WORLD);
+			MPI_Send(&r, 1, mpi_range_type, i+1, 02, MPI_COMM_WORLD);
+			//send the maximizer state tag 03, childRange tag 02
+			MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
+		}	
+			for(int i =0; i < boards.size();i++){
+				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			// Get boards back from cores; might as well refill boards, tag 11
+		}
+	
+		best.score =-10;
+		for(auto i:boards){
+			if(i.score>best.score){
+				copyBoard(i,best);
+			}
+		}
+		printBoard(best);
 	}
-//		else{
-//
-//
-//		
-//			for(int i =0; i < boards.size();i++){
-//
-//				// Send boards[i] to core i, tag 01
-//				//Check if we have enough cores
-//				if(worldSize > boards.size()){
-//				//	cerr << "You need at least "<<boards.size()<<" cores to ride this ride"<<endl;
-//				//	MPI_Abort(MPI_COMM_WORLD);
-//				//	MPI_Finalize();
-//				//	exit(1);
-//			
-//
-//					cout << "Not enough cores supplied, Will run sequentially" <<endl;
-//				
-//			
-//				}	
-//				//TODO: build initial range
-//				//TODO:Also send the maximizer state tag 03, childRange tag 02
-//				MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
-//			}	
-//			for(int i =0; i < boards.size();i++){
-//				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//				// Get boards back from cores; might as well refill boards, tag 11
-//			}
-//		
-//
-//			best.score =-10;
-//			for(auto i:boards){
-//				if(i.score>best.score){
-//					copyBoard(i,best);
-//				}
-//			}
-//		}
-//		//print best board option
-//		printBoard(best);
-//
-//	else{
-//		MPI_Status status;
-//		Board original;
-//		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
-//		int parentId = status.MPI_SOURCE;
-//		//get childRange tag 02, maximizer state, tag 03
-//		// get board and childStartId, save parentId, save maximizer state, tag 01
-//		bool maximizer;
-//		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//		Range childRange;
-//		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-//		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
-	//cout << "made it past if statement."<<endl;
+		//print best board option
+
+	else{
+		MPI_Status status;
+		Board original;
+		MPI_Recv(&original, 1,mpi_board_type, MPI_ANY_SOURCE, 01, MPI_COMM_WORLD,&status);
+		int parentId = status.MPI_SOURCE;
+		//get childRange tag 02, maximizer state, tag 03
+		// get board and childStartId, save parentId, save maximizer state, tag 01
+		bool maximizer;
+		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		Range childRange;
+		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
+	}
 	MPI_Finalize();
 	return 0;
 }
+
