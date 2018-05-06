@@ -19,14 +19,14 @@ MPI_Datatype mpi_range_type;
 //
 typedef struct Board_s{
 	char b[8][8] = {
-		{'_','X','_','X','_','X','_','X'},
-		{'X','_','X','_','X','_','X','_'},
-		{'_','X','_','X','_','X','_','X'},
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'},
-		{'O','_','O','_','O','_','O','_'},
-		{'_','O','_','O','_','O','_','O'},
-		{'O','_','O','_','O','_','O','_'}
+		{'_','_','_','_','_','_','_','_'},
+		{'_','_','_','_','X','_','X','_'},
+		{'_','_','_','O','_','O','_','_'},
+		{'_','_','_','_','_','_','_','_'},
+		{'_','_','_','_','_','_','_','_'},
+		{'_','_','_','_','_','_','_','_'}
 	};
 
 	int score = 0;
@@ -397,8 +397,17 @@ Board minimax(Board original, bool maximizer){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, Board original){
+	//cout << "ENTERED PARALLELSUBMASTER FUNCTION." << endl;
 	vector<Board> boards = getPossibleMoves(original,maximizer);
+	//cout << "CHILD RANGE MIN: " << childRange.min << " CHILD RANGE MAX: " << childRange.max << endl;
+	
+	if(boards.size()==0){
+		original.score = scoreBoard(original);
+		MPI_Send(&original,1,mpi_board_type,parentId,11,MPI_COMM_WORLD);
+	}
+	
 	if(childRange.min+boards.size() > childRange.max){
+		//cout << "INSIDE PARALLEL SUBMASTER IF STATEMENT " << endl;
 		// send 0 to parent, tag 10
 		//GENERAL STRUCTURE OF MPI SEND FOR REF
 		/*
@@ -463,15 +472,19 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 			if(best.score>i.score)
 				copyBoard(i,best);
 	}
+	//cout << "ATTEMPTING MPI SEND... " << endl;
+	printBoard(best);
 	MPI_Send(&best, 1, mpi_board_type, parentId, 11,MPI_COMM_WORLD);
+	//cout << "DONE SENDING BEST BOARD. " << endl;
 	//return best board to master
 	
 	
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]){
-	
+	//cout << "ATTEMPTING MPI INIT.... " << endl;
 	MPI_Init(&argc, &argv);
+	//cout << "DONE." << endl;
 
 	//YAY custom MPI data types...yay.....yeah
 	const int nitems=2;
@@ -506,10 +519,6 @@ int main(int argc, char* argv[]){
 
 //	printBoard(emptyBoard);
 
-//	vector<Board> moves = getPossibleMoves(emptyBoard,true);
-//	for (int i = 0; i < moves.size();i++){
-//		printBoard(moves[i]);
-//	}
 	
 //	cout << "CORE " << worldRank << " IS HOT." << endl;
 //	cout << "WORLDSIZE: " << worldSize << endl;
@@ -517,15 +526,22 @@ int main(int argc, char* argv[]){
 	if(worldRank == 0){
 		Board best;
 		vector<Board> boards = getPossibleMoves(emptyBoard, true);
+		vector<Board> moves = getPossibleMoves(emptyBoard,true);
+		//for (int i = 0; i < moves.size();i++){
+		//	printBoard(moves[i]);
+		//}
 
-		if(worldSize < boards.size()){ 
+		//cout << "BOARD SIZE: " << boards.size();
+
+		if(worldSize < boards.size()+1){ 
 			
 			cout << "Not enough cores supplied, Will run sequentially" <<endl;
 			best = minimax(emptyBoard, true);
-			clock_t end = (clock()-start)/CLOCKS_PER_SEC;
+			clock_t end = (clock()-start);
 			cout << "best endgame is: " << endl;
 			printBoard(best);
-			cout << "Time to find this board: " << end << " seconds." << endl;
+			cout << "Time to find this board: " << end << " microseconds." << endl;
+			MPI_Abort(MPI_COMM_WORLD,1);
 			return 0;
 		}
 
@@ -535,7 +551,7 @@ int main(int argc, char* argv[]){
 			int chunkSize = (worldSize-boards.size()-2)/boards.size();
 			Range r;
 			r.min = boards.size()+1 + i*chunkSize;
-			r.max = boards.size()+1 + (i+1)*chunkSize;
+			r.max = boards.size() + (i+1)*chunkSize;
 			bool maximizer = false;
 			MPI_Send(&maximizer, 1, MPI_INT, i+1, 03, MPI_COMM_WORLD);
 			MPI_Send(&r, 1, mpi_range_type, i+1, 02, MPI_COMM_WORLD);
@@ -543,7 +559,9 @@ int main(int argc, char* argv[]){
 			MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
 		}	
 			for(int i =0; i < boards.size();i++){
+				//cout << "ATTEMPTING TO RECEIVE BOARD SOLUTION... " << endl;
 				MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				//cout << "DONE. " << endl;
 			// Get boards back from cores; might as well refill boards, tag 11
 		}
 	
@@ -553,10 +571,14 @@ int main(int argc, char* argv[]){
 				copyBoard(i,best);
 			}
 		}
+		clock_t end = (clock()-start);
+		cout << "Time to find this board: " << end << " microseconds." << endl;
+		cout << "HAVE BEST BOARD: " << endl;
 		printBoard(best);
+		MPI_Abort(MPI_COMM_WORLD,0);
 	}
 		//print best board option
-
+		
 	else{
 		MPI_Status status;
 		Board original;
