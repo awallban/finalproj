@@ -21,10 +21,10 @@ typedef struct Board_s{
 	char b[8][8] = {
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'},
+		{'_','X','_','X','_','X','_','X'},
 		{'_','_','_','_','_','_','_','_'},
-		{'_','_','_','_','X','_','X','_'},
-		{'_','_','_','O','_','O','_','_'},
 		{'_','_','_','_','_','_','_','_'},
+		{'O','_','O','_','O','_','O','_'},
 		{'_','_','_','_','_','_','_','_'},
 		{'_','_','_','_','_','_','_','_'}
 	};
@@ -406,7 +406,7 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 		MPI_Send(&original,1,mpi_board_type,parentId,11,MPI_COMM_WORLD);
 	}
 	
-	if(childRange.min+boards.size() > childRange.max){
+	if(childRange.min+boards.size() > childRange.max || boards.size()==1){
 		//cout << "INSIDE PARALLEL SUBMASTER IF STATEMENT " << endl;
 		// send 0 to parent, tag 10
 		//GENERAL STRUCTURE OF MPI SEND FOR REF
@@ -432,7 +432,7 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 	for(int i =0; i < boards.size();i++){
 		Range temp;
 		temp.min = (childRange.min+boards.size()) + width/boards.size()*i;
-		temp.max = (childRange.min+boards.size()) + width/boards.size()*(i+1) -1;//Off by one errors are the worst
+		temp.max = (childRange.min+boards.size()) + width/boards.size()*(i+1);//Off by one errors are the worst
 		ranges.push_back(temp);
 	}
 	
@@ -461,19 +461,19 @@ void parallelSubMaster(bool maximizer, int id, int parentId, Range childRange, B
 		MPI_Recv(&boards[i], 1,mpi_board_type, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	Board best;
-	best.score=0;
+	best.score= maximizer?-10:10;
 	if(maximizer){
 		for(auto i:boards)
-			if(best.score<i.score)
+			if(best.score<=i.score)
 				copyBoard(i,best);
 	}
 	else{
 		for(auto i:boards)
-			if(best.score>i.score)
+			if(best.score>=i.score)
 				copyBoard(i,best);
 	}
 	//cout << "ATTEMPTING MPI SEND... " << endl;
-	printBoard(best);
+	//printBoard(best);
 	MPI_Send(&best, 1, mpi_board_type, parentId, 11,MPI_COMM_WORLD);
 	//cout << "DONE SENDING BEST BOARD. " << endl;
 	//return best board to master
@@ -554,6 +554,7 @@ int main(int argc, char* argv[]){
 			r.max = boards.size() + (i+1)*chunkSize;
 			bool maximizer = false;
 			MPI_Send(&maximizer, 1, MPI_INT, i+1, 03, MPI_COMM_WORLD);
+			cout << "RANGE MIN IS: " << r.min << " RANGE MAX IS: " << r.max << endl;
 			MPI_Send(&r, 1, mpi_range_type, i+1, 02, MPI_COMM_WORLD);
 			//send the maximizer state tag 03, childRange tag 02
 			MPI_Send(&boards[i], 1,mpi_board_type, i+1, 01, MPI_COMM_WORLD);
@@ -590,6 +591,7 @@ int main(int argc, char* argv[]){
 		MPI_Recv(&maximizer, 1, MPI_INT, parentId, 03, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		Range childRange;
 		MPI_Recv(&childRange, 1, mpi_range_type, parentId, 02, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		//cout << "RECEIVED RANGE MIN: " << childRange.min << " AND RANGE MAX: " << childRange.max << endl;
 		parallelSubMaster(maximizer, worldRank, parentId, childRange, original);
 	}
 	MPI_Finalize();
